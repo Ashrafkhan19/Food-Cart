@@ -1,5 +1,6 @@
 package com.everynation.church.foodcart.presentation.screens
 
+import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateColorAsState
@@ -21,6 +22,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.lazy.LazyRow
@@ -28,6 +30,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.FavoriteBorder
 import androidx.compose.material.icons.filled.KeyboardArrowDown
@@ -45,7 +48,6 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
@@ -55,6 +57,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.Brush
@@ -62,7 +65,9 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.DpOffset
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.window.PopupProperties
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.AsyncImage
@@ -97,7 +102,7 @@ fun HomeScreen(
                 navigationIcon = {
                     Icon(
                         imageVector = Icons.Default.Menu, contentDescription = "",
-                        tint  = Color.Black,
+                        tint = Color.Black,
                         modifier = Modifier.padding(horizontal = 12.dp)
                     )
                 },
@@ -105,12 +110,12 @@ fun HomeScreen(
                     Icon(
                         imageVector = Icons.Default.FavoriteBorder,
                         contentDescription = "",
-                        tint  = Color.Black,
+                        tint = Color.Black,
                         modifier = Modifier.clickable {
                             onFavNavClick()
                         }
 
-                        )
+                    )
 
                     Spacer(modifier = Modifier.width(8.dp))
                     BadgedBox(badge = {
@@ -121,7 +126,7 @@ fun HomeScreen(
                         Icon(
                             imageVector = Icons.Default.ShoppingCart,
                             contentDescription = "",
-                            tint  = Color.Black,
+                            tint = Color.Black,
                             modifier = Modifier.clickable {
                                 onCartNavClick()
                             }
@@ -146,37 +151,63 @@ fun HomeScreen(
                 onFavClick = viewModel::onFavClick
             )
 
-            CategoriesDropDown(modifier = Modifier
-                .align(Alignment.BottomCenter)
+            CategoriesDropDown(
+                modifier = Modifier
+                    .align(Alignment.BottomCenter)
 
-                .padding(bottom = it.calculateBottomPadding() + 12.dp)
-                .background(
-                    MaterialTheme.colorScheme.background,
-                    shape = MaterialTheme.shapes.small
-                )
-                .padding(8.dp)
-                ,
-                data.keys)
+                    .padding(bottom = it.calculateBottomPadding() + 12.dp)
+                    .background(
+                        MaterialTheme.colorScheme.background,
+                        shape = MaterialTheme.shapes.small
+                    )
+                    .padding(8.dp),
+                data.keys
+            )
         }
     }
 }
 
+@OptIn(ExperimentalComposeUiApi::class)
 @Composable
 fun CategoriesDropDown(modifier: Modifier = Modifier, keys: Set<String>) {
     var isExpanded by rememberSaveable {
         mutableStateOf(false)
     }
-    Box(modifier = modifier.clickable {
-                                      isExpanded = true
-    }, contentAlignment = Alignment.Center){
-        Row {
-            Icon(imageVector = Icons.Default.Menu, contentDescription = "")
-            Spacer(modifier = Modifier.width(4.dp))
-            Text(text = "Categories")
+    val context = LocalContext.current
+    Box(modifier = modifier
+        // .padding(horizontal = 64.dp)
+        .clickable {
+            isExpanded = !isExpanded
+        }, contentAlignment = Alignment.Center
+    ) {
+        AnimatedVisibility(visible = !isExpanded) {
+            Row {
+                Icon(imageVector = Icons.Default.Menu, contentDescription = "")
+                Spacer(modifier = Modifier.width(4.dp))
+                Text(text = "Categories")
+            }
         }
-        DropdownMenu(expanded = isExpanded, onDismissRequest = { /*TODO*/ }) {
+        
+        AnimatedVisibility(visible = isExpanded) {
+            FilledIconButton(onClick = {
+                isExpanded = false
+            }) {
+                Icon(imageVector = Icons.Filled.Clear, contentDescription ="")
+            }
+        }
+        
+        DropdownMenu(
+            properties = PopupProperties(usePlatformDefaultWidth = true),
+            modifier = Modifier
+                .wrapContentWidth()
+                //.fillMaxWidth()
+                .align(Alignment.Center),
+            //offset = DpOffset(x = (0).dp, y = (-200).dp),
+            expanded = isExpanded, onDismissRequest = { /*TODO*/ }) {
             keys.forEach {
-                DropdownMenuItem(text = { Text(text = it) }, onClick = { /*TODO*/ })
+                DropdownMenuItem(
+                    modifier = Modifier.padding(horizontal = 16.dp),
+                    text = { Text(text = it) }, onClick = { /*TODO*/ })
             }
         }
     }
@@ -291,9 +322,9 @@ private fun FoodItem(foodItem: FoodItemEntity, onFavClick: (FoodItemEntity) -> U
                         text = "₹${foodItem.price.roundToInt()}",
                         style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold)
                     )
-                    if(foodItem.categoryName == "Beverages") {
+                    if (foodItem.categoryName == "Beverages") {
                         Text(text = "l")
-                    } else if(foodItem.categoryName == "Food") {
+                    } else if (foodItem.categoryName == "Food") {
                         Text(text = "/kg")
                     }
                     Spacer(modifier = Modifier.weight(1f))
