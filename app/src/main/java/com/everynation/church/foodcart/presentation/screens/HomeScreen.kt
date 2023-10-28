@@ -32,6 +32,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.FavoriteBorder
@@ -41,6 +42,7 @@ import androidx.compose.material.icons.filled.ShoppingCart
 import androidx.compose.material3.Badge
 import androidx.compose.material3.BadgedBox
 import androidx.compose.material3.Card
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Divider
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
@@ -97,6 +99,8 @@ fun HomeScreen(
 ) {
     val viewModel: MainViewModel = viewModel(LocalContext.current as ComponentActivity)
     val data by viewModel.data.collectAsStateWithLifecycle()
+    val cartCount by viewModel.cartData.collectAsStateWithLifecycle()
+    val favCount by viewModel.favData.collectAsStateWithLifecycle()
     Scaffold(
         //containerColor = MaterialTheme.colorScheme.onBackground,
         topBar = {
@@ -116,20 +120,30 @@ fun HomeScreen(
                     )
                 },
                 actions = {
-                    Icon(
-                        imageVector = Icons.Default.FavoriteBorder,
-                        contentDescription = "",
-                        tint = Color.Black,
-                        modifier = Modifier.clickable {
-                            onFavNavClick()
-                        }
+                    BadgedBox(badge = {
+                        if(favCount.isNotEmpty()) {
+                        Badge(modifier = Modifier.offset((-10).dp, 4.dp)) {
 
-                    )
+                                Text(text = favCount.size.toString())
+                            }
+                        }
+                    }) {
+                        Icon(
+                            imageVector = Icons.Default.FavoriteBorder,
+                            contentDescription = "",
+                            tint = Color.Black,
+                            modifier = Modifier.clickable {
+                                onFavNavClick()
+                            }
+
+                        )
+                    }
+
 
                     Spacer(modifier = Modifier.width(8.dp))
                     BadgedBox(badge = {
                         Badge(modifier = Modifier.offset((-10).dp, 4.dp)) {
-                            Text(text = "2")
+                            Text(text = cartCount.size.toString())
                         }
                     }) {
                         Icon(
@@ -149,29 +163,39 @@ fun HomeScreen(
             )
         }) {
         Box(
-            modifier = Modifier.padding(
-                top = it.calculateTopPadding()
+            modifier = Modifier
+                .padding(
+                    top = it.calculateTopPadding()
 
-            ),
+                )
+                .fillMaxSize(), contentAlignment = Alignment.Center,
         ) {
-            HomePage(
-                data,
-                onItemClick = { _, _ -> },
-                onFavClick = viewModel::onFavClick
-            )
 
-            CategoriesDropDown(
-                modifier = Modifier
-                    .align(Alignment.BottomCenter)
 
-                    .padding(bottom = it.calculateBottomPadding() + 12.dp)
-                    .background(
-                        MaterialTheme.colorScheme.background,
-                        shape = MaterialTheme.shapes.small
-                    )
-                    .padding(8.dp),
-                data.keys
-            )
+
+            if(data.isEmpty()){
+                CircularProgressIndicator()
+            } else {
+                HomePage(
+                    data,
+                    onItemClick = { _, _ -> },
+                    onFavClick = viewModel::onFavClick,
+                    saveToCart = viewModel::saveToCart
+                )
+
+                CategoriesDropDown(
+                    modifier = Modifier
+                        .align(Alignment.BottomCenter)
+
+                        .padding(bottom = it.calculateBottomPadding() + 12.dp)
+                        .background(
+                            MaterialTheme.colorScheme.background,
+                            shape = MaterialTheme.shapes.small
+                        )
+                        .padding(8.dp),
+                    data.keys
+                )
+            }
         }
     }
 }
@@ -242,6 +266,7 @@ fun HomePage(
     data: Map<String, List<FoodItemEntity>>,
     onItemClick: (ShoppingDataModel.Category, Boolean) -> Unit,
     onFavClick: (FoodItemEntity) -> Unit,
+    saveToCart: (FoodItemEntity) -> Unit,
 ) {
     LazyColumn(
         modifier = Modifier,
@@ -250,7 +275,7 @@ fun HomePage(
     ) {
 
         data.forEach {
-            sectionItem(category = it, onItemClick = onItemClick, onFavClick = onFavClick)
+            sectionItem(category = it, onItemClick = onItemClick, onFavClick = onFavClick, saveToCart = saveToCart)
         }
 
 
@@ -262,6 +287,7 @@ private fun LazyListScope.sectionItem(
     category: Map.Entry<String, List<FoodItemEntity>>,
     onItemClick: (ShoppingDataModel.Category, Boolean) -> Unit,
     onFavClick: (FoodItemEntity) -> Unit,
+    saveToCart: (FoodItemEntity) -> Unit,
 ) {
     item {
         Column {
@@ -290,7 +316,7 @@ private fun LazyListScope.sectionItem(
                 LazyRow(horizontalArrangement = Arrangement.spacedBy(24.dp)) {
 
                     items(category.value) { foodItem ->
-                        FoodItem(foodItem) { onFavClick(it) }
+                        FoodItem(foodItem, onFavClick = onFavClick, saveToCart = saveToCart)
                     }
 
                 }
@@ -301,7 +327,11 @@ private fun LazyListScope.sectionItem(
 }
 
 @Composable
-private fun FoodItem(foodItem: FoodItemEntity, onFavClick: (FoodItemEntity) -> Unit) {
+private fun FoodItem(
+    foodItem: FoodItemEntity,
+                     onFavClick: (FoodItemEntity) -> Unit,
+    saveToCart: (FoodItemEntity) -> Unit,
+) {
     val color by animateColorAsState(
         targetValue = if (foodItem.isFav) Color.Red else Color.White,
         label = ""
@@ -309,7 +339,7 @@ private fun FoodItem(foodItem: FoodItemEntity, onFavClick: (FoodItemEntity) -> U
 
     val scope = rememberCoroutineScope()
 
-    var scaleX = remember {
+    val scaleX = remember {
         Animatable(1f)
     }
 
@@ -349,10 +379,10 @@ private fun FoodItem(foodItem: FoodItemEntity, onFavClick: (FoodItemEntity) -> U
                             containerColor = Orange, Color.White
                         ),
                         modifier = Modifier.size(36.dp),
-                        onClick = { /*TODO*/ },
+                        onClick = { saveToCart(foodItem) },
                         shape = MaterialTheme.shapes.medium
                     ) {
-                        Icon(imageVector = Icons.Default.Add, contentDescription = "")
+                        Icon(imageVector = if(!foodItem.isOnCart) Icons.Default.Add else Icons.Default.Check, contentDescription = "")
                     }
                     Spacer(modifier = Modifier.width(1.dp))
                 }

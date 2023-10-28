@@ -53,7 +53,7 @@ import kotlin.math.roundToInt
 @Composable
 fun CartScreen(onBack: () -> Unit) {
     val viewModel: MainViewModel = viewModel(LocalContext.current as ComponentActivity)
-    val fav by viewModel.favData.collectAsStateWithLifecycle()
+    val cartData by viewModel.cartData.collectAsStateWithLifecycle()
 
 
     Scaffold(containerColor = MaterialTheme.colorScheme.background, topBar = {
@@ -91,12 +91,12 @@ fun CartScreen(onBack: () -> Unit) {
                 contentPadding = PaddingValues(bottom = 8.dp),
                 verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
-                items(fav, key = { it.id }) { food: FoodItemEntity ->
+                items(cartData, key = { it.id }) { food: FoodItemEntity ->
                     CartItem(foodItem = food, onFavClick = viewModel::onFavClick)
                 }
             }
 
-            CartTotal(modifier = Modifier, totalPrice = fav.sumOf { it.price * 3 })
+            CartTotal(modifier = Modifier, totalPrice = cartData.sumOf { it.price * 3 })
         }
     }
 }

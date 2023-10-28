@@ -16,7 +16,8 @@ data class FoodItemEntity(
     val price: Double,
     val categoryName: String,
     val categoryId: Int, // Foreign key to link items with categories,
-    val isFav: Boolean = false
+    val isFav: Boolean = false,
+    val isOnCart: Boolean = false
 )
 
 @Entity

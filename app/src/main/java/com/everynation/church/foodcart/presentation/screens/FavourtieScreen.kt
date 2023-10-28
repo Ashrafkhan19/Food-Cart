@@ -66,18 +66,29 @@ fun FavouriteScreen(onBack: () -> Unit) {
                 navigationIcon = {
                     Icon(
                         imageVector = Icons.Default.ArrowBack, contentDescription = "",
-                        modifier = Modifier.padding(horizontal = 16.dp).clickable {
-                            onBack()
-                        }
+                        modifier = Modifier
+                            .padding(horizontal = 16.dp)
+                            .clickable {
+                                onBack()
+                            }
                     )
                 },
             )
         }) {
         LazyColumn(
-            modifier = Modifier.padding(top = it.calculateTopPadding()).animateContentSize(),
+            modifier = Modifier
+                .padding(top = it.calculateTopPadding())
+                .animateContentSize(),
             contentPadding = PaddingValues(horizontal = 16.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp)
+            verticalArrangement = Arrangement.spacedBy(16.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
         ) {
+            if(fav.isEmpty()){
+                item {
+                    Text(text = "Add Something to Favourites.", style = MaterialTheme.typography.titleLarge)
+                }
+
+            }
             items(fav, key = {it.id}, ) { food: FoodItemEntity ->
                 FavFoodItem(foodItem = food, onFavClick = viewModel::onFavClick)
             }

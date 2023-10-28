@@ -32,6 +32,9 @@ class FoodRepositoryImp @Inject constructor(
 
     }
 
+    override fun getAllItemsOnCart(): Flow<List<FoodItemEntity>> {
+        return categoryDao.getAllItemsOnCart()
+    }
 
     override fun getAllFoodsByCategory(): Flow<List<FoodItemEntity>> {
         return categoryDao.getAllItems()
@@ -40,7 +43,7 @@ class FoodRepositoryImp @Inject constructor(
 
     }
 
-    override suspend fun getAllItemsWithFav(): Flow<List<FoodItemEntity>> {
+    override fun getAllItemsWithFav(): Flow<List<FoodItemEntity>> {
        return categoryDao.getAllItemsWithFav()
     }
 

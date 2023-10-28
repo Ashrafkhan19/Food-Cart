@@ -27,8 +27,12 @@ class MainViewModel @Inject constructor(
         viewModelScope, SharingStarted.WhileSubscribed(5000L), emptyMap()
     )
 
-    val favData = foodRepository.getAllFoodsByCategory()
-        .map { foodItemEntities -> foodItemEntities.filter { it.isFav } }
+    val favData = foodRepository.getAllItemsWithFav()
+        .stateIn(
+            viewModelScope, SharingStarted.WhileSubscribed(5000L), emptyList()
+        )
+
+    val cartData = foodRepository.getAllItemsOnCart()
         .stateIn(
             viewModelScope, SharingStarted.WhileSubscribed(5000L), emptyList()
         )
@@ -37,6 +41,13 @@ class MainViewModel @Inject constructor(
 
         viewModelScope.launch {
             val newFoodItem = foodItem.copy(isFav = !foodItem.isFav)
+            foodRepository.updateFoodItem(newFoodItem)
+        }
+    }
+
+    fun saveToCart(foodItem: FoodItemEntity) {
+        viewModelScope.launch {
+            val newFoodItem = foodItem.copy(isOnCart = !foodItem.isOnCart)
             foodRepository.updateFoodItem(newFoodItem)
         }
     }

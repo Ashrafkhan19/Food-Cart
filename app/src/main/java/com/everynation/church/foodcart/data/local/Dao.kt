@@ -23,6 +23,9 @@ interface CategoryDao {
     @Query("SELECT * FROM fooditementity WHERE isFav=:isFav")
     fun getAllItemsWithFav(isFav: Boolean = true): Flow<List<FoodItemEntity>>
 
+    @Query("SELECT * FROM fooditementity WHERE isOnCart='1'")
+    fun getAllItemsOnCart(): Flow<List<FoodItemEntity>>
+
 
 
     // You can add more queries or methods based on your requirements

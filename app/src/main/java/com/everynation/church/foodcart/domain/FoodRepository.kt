@@ -9,5 +9,6 @@ interface FoodRepository {
     fun getAllFoodsByCategory(): Flow<List<FoodItemEntity>>
 
     suspend fun updateFoodItem(foodItem: FoodItemEntity)
-    suspend fun getAllItemsWithFav(): Flow<List<FoodItemEntity>>
+     fun getAllItemsWithFav(): Flow<List<FoodItemEntity>>
+     fun getAllItemsOnCart(): Flow<List<FoodItemEntity>>
 }
