@@ -2,8 +2,10 @@ package com.everynation.church.foodcart.presentation.screens
 
 import android.widget.Toast
 import androidx.activity.ComponentActivity
+import androidx.compose.animation.Animatable
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
@@ -52,8 +54,12 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -62,6 +68,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
@@ -78,6 +85,8 @@ import com.everynation.church.foodcart.presentation.MainViewModel
 import com.everynation.church.foodcart.ui.theme.FoodCartTheme
 import com.everynation.church.foodcart.ui.theme.Orange
 import com.google.gson.Gson
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import kotlin.math.roundToInt
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -262,7 +271,6 @@ private fun LazyListScope.sectionItem(
             val rotate by animateFloatAsState(
                 targetValue = if (isOpen) 180f else 0f,
                 label = "",
-                animationSpec = tween(durationMillis = 5000)
             )
             Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.clickable {
                 isOpen = !isOpen
@@ -298,6 +306,13 @@ private fun FoodItem(foodItem: FoodItemEntity, onFavClick: (FoodItemEntity) -> U
         targetValue = if (foodItem.isFav) Color.Red else Color.White,
         label = ""
     )
+
+    val scope = rememberCoroutineScope()
+
+    var scaleX = remember {
+        Animatable(1f)
+    }
+
     Card {
         Box(
             modifier = Modifier
@@ -323,7 +338,7 @@ private fun FoodItem(foodItem: FoodItemEntity, onFavClick: (FoodItemEntity) -> U
                         style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold)
                     )
                     if (foodItem.categoryName == "Beverages") {
-                        Text(text = "l")
+                        Text(text = " L")
                     } else if (foodItem.categoryName == "Food") {
                         Text(text = "/kg")
                     }
@@ -346,10 +361,22 @@ private fun FoodItem(foodItem: FoodItemEntity, onFavClick: (FoodItemEntity) -> U
                 modifier = Modifier
                     .align(Alignment.TopEnd)
                     .padding(2.dp)
-                    .clickable { onFavClick(foodItem) },
+                    .clickable {
+                        scope.launch {
+                            onFavClick(foodItem)
+                            scaleX.animateTo(1.5f)
+                            delay(100L)
+                            scaleX.animateTo(1.0f)
+                        }
+                    }
+                    .graphicsLayer {
+                        this.scaleX = scaleX.value
+                        this.scaleY = scaleX.value
+                    }
+                ,
                 imageVector = Icons.Filled.Favorite,
                 tint = color,
-                contentDescription = ""
+                contentDescription = "",
             )
         }
     }
